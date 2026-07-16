@@ -3,9 +3,10 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import logo from '../assets/fintrack-logo.png'
 import { Eye, EyeOff } from 'lucide-react'
+import GoogleSignInButton from '../components/GoogleSignInButton'
 
 export default function Register() {
-  const { signUp, loading, error } = useAuth()
+  const { signUp, signInWithGoogle, loading, error } = useAuth()
   const navigate = useNavigate()
 const [username, setUsername] = useState('')
 const [email, setEmail] = useState('')
@@ -33,6 +34,11 @@ const [passwordError, setPasswordError] = useState('')
     setTimeout(() => navigate('/login'), 1200)
   }
 }
+
+  const handleGoogleCredential = async (idToken) => {
+    const ok = await signInWithGoogle(idToken)
+    if (ok) navigate('/')
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-paper px-5">
@@ -156,6 +162,14 @@ const [passwordError, setPasswordError] = useState('')
           <button type="submit" disabled={loading} className="btn-primary w-full disabled:opacity-60">
             {loading ? 'Creating account…' : 'Create account'}
           </button>
+
+          <div className="flex items-center gap-3 py-1">
+            <div className="h-px flex-1 bg-pine/15" />
+            <span className="text-xs text-ink/40">or</span>
+            <div className="h-px flex-1 bg-pine/15" />
+          </div>
+
+          <GoogleSignInButton onCredential={handleGoogleCredential} />
 
           <p className="text-center text-sm text-ink/60">
             Already have an account?{' '}

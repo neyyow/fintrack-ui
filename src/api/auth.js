@@ -4,6 +4,10 @@ import client from './client'
 export const login = (email, password) =>
   client.post('/login', { Email: email, Password: password }).then((res) => res.data)
 
+// POST /auth/google -> { Token, UserId, Email } - same shape as normal login
+export const loginWithGoogle = (idToken) =>
+  client.post('/auth/google', { IdToken: idToken }).then((res) => res.data)
+
 // POST /register -> "User registered successfully"
 export const register = (username, email, password) =>
   client

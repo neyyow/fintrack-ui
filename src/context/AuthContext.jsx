@@ -29,6 +29,24 @@ export function AuthProvider({ children }) {
     }
   }, [])
 
+  const signInWithGoogle = useCallback(async (idToken) => {
+    setLoading(true)
+    setError(null)
+    try {
+      const data = await authApi.loginWithGoogle(idToken)
+      const nextUser = { userId: data.UserId ?? data.userId, email: data.Email ?? data.email }
+      localStorage.setItem('fintrack_token', data.Token ?? data.token)
+      localStorage.setItem('fintrack_user', JSON.stringify(nextUser))
+      setUser(nextUser)
+      return true
+    } catch (err) {
+      setError(err.response?.data ?? 'Could not sign in with Google. Please try again.')
+      return false
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
   const signUp = useCallback(async (username, email, password) => {
     setLoading(true)
     setError(null)
@@ -50,7 +68,7 @@ export function AuthProvider({ children }) {
   }, [])
 
   return (
-    <AuthContext.Provider value={{ user, loading, error, signIn, signUp, signOut, setError }}>
+    <AuthContext.Provider value={{ user, loading, error, signIn, signInWithGoogle, signUp, signOut, setError }}>
       {children}
     </AuthContext.Provider>
   )

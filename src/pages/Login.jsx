@@ -3,9 +3,10 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import logo from '../assets/fintrack-logo.png'
 import { Eye, EyeOff } from 'lucide-react'
+import GoogleSignInButton from '../components/GoogleSignInButton'
 
 export default function Login() {
-  const { signIn, loading, error } = useAuth()
+  const { signIn, signInWithGoogle, loading, error } = useAuth()
   const navigate = useNavigate()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -14,6 +15,11 @@ export default function Login() {
   const handleSubmit = async (e) => {
     e.preventDefault()
     const ok = await signIn(email, password)
+    if (ok) navigate('/')
+  }
+
+  const handleGoogleCredential = async (idToken) => {
+    const ok = await signInWithGoogle(idToken)
     if (ok) navigate('/')
   }
 
@@ -85,6 +91,14 @@ export default function Login() {
           <button type="submit" disabled={loading} className="btn-primary w-full disabled:opacity-60">
             {loading ? 'Signing in…' : 'Sign in'}
           </button>
+
+          <div className="flex items-center gap-3 py-1">
+            <div className="h-px flex-1 bg-pine/15" />
+            <span className="text-xs text-ink/40">or</span>
+            <div className="h-px flex-1 bg-pine/15" />
+          </div>
+
+          <GoogleSignInButton onCredential={handleGoogleCredential} />
 
           <p className="text-center text-sm text-ink/60">
             New to FinTrack?{' '}
