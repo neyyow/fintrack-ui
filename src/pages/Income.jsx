@@ -120,8 +120,8 @@ export default function Income() {
       }
       setModalOpen(false)
       await load()
-    } catch {
-      setErrorMsg('Could not save that income. Please try again.')
+    } catch (err) {
+      setErrorMsg(err.response?.data ?? 'Could not save that income. Please try again.')
     } finally {
       setSaving(false)
     }

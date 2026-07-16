@@ -85,8 +85,8 @@ export default function Expenses() {
       }
       setModalOpen(false)
       await load()
-    } catch {
-      setErrorMsg('Could not save that expense. Please try again.')
+    } catch (err) {
+      setErrorMsg(err.response?.data ?? 'Could not save that expense. Please try again.')
     } finally {
       setSaving(false)
     }
