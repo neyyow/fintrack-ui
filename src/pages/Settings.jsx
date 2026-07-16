@@ -40,7 +40,7 @@ export default function Settings() {
       setOriginalUsername(data.username)
       setOriginalEmail(data.email)
     } catch {
-      setMessage('Failed to load profile.')
+      setErrorMessage('Failed to load profile.')
     } finally {
       setLoading(false)
     }

@@ -1,8 +1,9 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { getExpenses, createExpense, updateExpense, deleteExpense } from '../api/expense'
 import Modal from '../components/Modal'
 import TransactionRow from '../components/TransactionRow'
-import { EXPENSE_CATEGORIES } from '../utils/categories'
+import CategoryPicker from '../components/CategoryPicker'
+import { EXPENSE_CATEGORIES, mergeCategories, hideCustomCategory } from '../utils/categories'
 
 const emptyForm = { amount: '', category: EXPENSE_CATEGORIES[0].name, description: '' }
 
@@ -14,6 +15,17 @@ export default function Expenses() {
   const [editing, setEditing] = useState(null)
   const [form, setForm] = useState(emptyForm)
   const [saving, setSaving] = useState(false)
+  const [hiddenVersion, setHiddenVersion] = useState(0)
+
+  const categoryOptions = useMemo(
+    () => mergeCategories(EXPENSE_CATEGORIES, expenses, 'category', 'expense'),
+    [expenses, hiddenVersion]
+  )
+
+  function handleDeleteCategory(name) {
+    hideCustomCategory('expense', name)
+    setHiddenVersion((v) => v + 1)
+  }
 
   async function load() {
     setLoading(true)
@@ -139,21 +151,14 @@ export default function Expenses() {
             />
           </div>
 
-          <div>
-            <label className="label-field" htmlFor="category">Category</label>
-            <select
-              id="category"
-              value={form.category}
-              onChange={(e) => setForm({ ...form, category: e.target.value })}
-              className="input-field"
-            >
-              {EXPENSE_CATEGORIES.map((c) => (
-                <option key={c.name} value={c.name}>
-                  {c.name}
-                </option>
-              ))}
-            </select>
-          </div>
+          <CategoryPicker
+            id="category"
+            label="Category"
+            options={categoryOptions}
+            value={form.category}
+            onChange={(val) => setForm({ ...form, category: val })}
+            onDeleteCustom={handleDeleteCategory}
+          />
 
           <div>
             <label className="label-field" htmlFor="description">Description</label>
