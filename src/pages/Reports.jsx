@@ -153,6 +153,41 @@ export default function Reports() {
     setCategoryFilter('all')
   }
 
+  function escapeCsvField(value) {
+    const str = String(value ?? '')
+    // Wrap in quotes (and escape any inner quotes) if the value itself
+    // contains a comma, quote, or newline - otherwise it'd break the columns.
+    if (/[",\n]/.test(str)) return `"${str.replace(/"/g, '""')}"`
+    return str
+  }
+
+  function handleExportCsv() {
+    const headers = ['Date', 'Type', 'Category/Source', 'Description', 'Amount']
+    const rows = filtered.map((t) => [
+      new Date(t.dateCreated).toISOString().slice(0, 10), // ISO date so spreadsheets recognize it as a real date
+      t.type,
+      t.label,
+      t.description || '',
+      t.amount.toFixed(2), // plain number, no currency symbol, so it's usable in spreadsheet formulas
+    ])
+
+    const csvContent = [headers, ...rows]
+      .map((row) => row.map(escapeCsvField).join(','))
+      .join('\r\n')
+
+    // The leading \uFEFF (byte order mark) tells Excel this file is UTF-8,
+    // so peso signs and other special characters don't show up garbled.
+    const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `fintrack-report-${from}-to-${to}.csv`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
+  }
+
   return (
     <div>
       {/* Only shown on the printed page - gives the report a proper header once the sidebar is hidden */}
@@ -168,9 +203,18 @@ export default function Reports() {
           <h1 className="text-3xl font-semibold">Reports</h1>
           <p className="text-ink/55 mt-1">See how your money moved, then print it if you need a copy.</p>
         </div>
-        <button onClick={() => window.print()} className="btn-primary">
-          🖨 Print report
-        </button>
+        <div className="flex gap-2 print:hidden">
+          <button
+            onClick={handleExportCsv}
+            disabled={filtered.length === 0}
+            className="btn-secondary disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            ⬇ Export CSV
+          </button>
+          <button onClick={() => window.print()} className="btn-primary">
+            🖨 Print report
+          </button>
+        </div>
       </div>
 
       {errorMsg && (
