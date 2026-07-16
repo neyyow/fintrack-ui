@@ -7,6 +7,7 @@ const NAV_ITEMS = [
   { to: '/expenses', label: 'Expenses', icon: ExpenseIcon },
   { to: '/income', label: 'Income', icon: IncomeIcon },
   { to: '/budget', label: 'Budget', icon: BudgetIcon },
+  { to: '/reports', label: 'Reports', icon: ReportsIcon },
 ]
 
 export default function AppShell({ children }) {
@@ -21,7 +22,7 @@ export default function AppShell({ children }) {
   return (
     <div className="min-h-screen flex flex-col md:flex-row bg-paper">
       {/* Desktop sidebar — styled like the spine of a passbook */}
-      <aside className="hidden md:flex md:flex-col md:w-64 shrink-0 bg-pine-dark text-paper">
+      <aside className="hidden md:flex md:flex-col md:w-64 shrink-0 bg-pine-dark text-paper print:hidden">
         <div className="px-6 py-7 border-b border-paper/10">
           <p className="font-display text-2xl tracking-tight">FinTrack</p>
           <p className="text-xs text-paper/50 mt-0.5 font-mono">personal ledger</p>
@@ -63,19 +64,19 @@ export default function AppShell({ children }) {
       </aside>
 
       {/* Mobile top bar */}
-      <header className="md:hidden flex items-center justify-between px-5 py-4 bg-pine-dark text-paper">
+      <header className="md:hidden flex items-center justify-between px-5 py-4 bg-pine-dark text-paper print:hidden">
         <p className="font-display text-xl">FinTrack</p>
         <button onClick={handleSignOut} className="text-xs text-paper/70">
           Sign out
         </button>
       </header>
 
-      <main className="flex-1 px-5 md:px-10 py-6 md:py-10 pb-24 md:pb-10 max-w-5xl w-full mx-auto">
+      <main className="flex-1 px-5 md:px-10 py-6 md:py-10 pb-24 md:pb-10 max-w-5xl w-full mx-auto print:p-0 print:max-w-none">
         {children}
       </main>
 
       {/* Mobile bottom tab bar */}
-      <nav className="md:hidden fixed bottom-0 inset-x-0 bg-pine-dark border-t border-paper/10 flex justify-around py-2 z-40">
+      <nav className="md:hidden fixed bottom-0 inset-x-0 bg-pine-dark border-t border-paper/10 flex justify-around py-2 z-40 print:hidden">
         {NAV_ITEMS.map(({ to, label, icon: Icon }) => (
           <NavLink
             key={to}
@@ -129,6 +130,15 @@ function BudgetIcon(props) {
       <rect x="3.5" y="5" width="17" height="14" rx="2" />
       <path d="M3.5 10h17" strokeLinecap="round" />
       <path d="M8 14.5h3" strokeLinecap="round" />
+    </svg>
+  )
+}
+
+function ReportsIcon(props) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" {...props}>
+      <path d="M5 4h11l3 3v13a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1Z" strokeLinejoin="round" />
+      <path d="M8 12v5M12 9v8M16 14v3" strokeLinecap="round" />
     </svg>
   )
 }
