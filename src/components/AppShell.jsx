@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 
@@ -11,55 +11,90 @@ const NAV_ITEMS = [
   { to: '/logs', label: 'Logs', icon: LogsIcon },
 ]
 
+const COLLAPSE_KEY = 'fintrack:sidebarCollapsed'
+
 export default function AppShell({ children }) {
   const { user, signOut } = useAuth()
   const navigate = useNavigate()
+  const [collapsed, setCollapsed] = useState(() => localStorage.getItem(COLLAPSE_KEY) === 'true')
 
   const handleSignOut = () => {
     signOut()
     navigate('/login')
   }
 
+  function toggleCollapsed() {
+    setCollapsed((prev) => {
+      const next = !prev
+      localStorage.setItem(COLLAPSE_KEY, String(next))
+      return next
+    })
+  }
+
   return (
     <div className="min-h-screen flex flex-col md:flex-row bg-paper">
       {/* Desktop sidebar — styled like the spine of a passbook */}
-      <aside className="hidden md:flex md:flex-col md:w-64 shrink-0 bg-pine-dark text-paper print:hidden">
-        <div className="px-6 py-7 border-b border-paper/10">
-          <p className="font-display text-2xl tracking-tight">FinTrack</p>
-          <p className="text-xs text-paper/50 mt-0.5 font-mono">personal ledger</p>
+      <aside
+        className={`hidden md:flex md:flex-col shrink-0 bg-pine-dark text-paper print:hidden transition-[width] duration-200 ${
+          collapsed ? 'md:w-16' : 'md:w-56'
+        }`}
+      >
+        <div className={`py-7 border-b border-paper/10 flex items-center ${collapsed ? 'justify-center px-2' : 'justify-between px-6'}`}>
+          {!collapsed && (
+            <div>
+              <p className="font-display text-2xl tracking-tight">FinTrack</p>
+              <p className="text-xs text-paper/50 mt-0.5 font-mono">personal ledger</p>
+            </div>
+          )}
+          <button
+            onClick={toggleCollapsed}
+            title={collapsed ? 'Expand menu' : 'Collapse menu'}
+            className="text-paper/60 hover:text-paper hover:bg-paper/10 transition-colors p-1.5 rounded-md shrink-0"
+          >
+            <CollapseToggleIcon collapsed={collapsed} className="w-[18px] h-[18px]" />
+          </button>
         </div>
 
-        <nav className="flex-1 px-3 py-5 space-y-1">
+        <nav className={`flex-1 py-5 space-y-1 ${collapsed ? 'px-2' : 'px-3'}`}>
           {NAV_ITEMS.map(({ to, label, icon: Icon }) => (
             <NavLink
               key={to}
               to={to}
               end={to === '/'}
+              title={collapsed ? label : undefined}
               className={({ isActive }) =>
-                `flex items-center gap-3 px-3.5 py-2.5 rounded-md text-sm font-medium transition-colors ${
-                  isActive ? 'bg-gold/20 text-gold-light' : 'text-paper/75 hover:bg-paper/10 hover:text-paper'
-                }`
+                `flex items-center gap-3 rounded-md text-sm font-medium transition-colors ${
+                  collapsed ? 'justify-center px-2 py-2.5' : 'px-3.5 py-2.5'
+                } ${isActive ? 'bg-gold/20 text-gold-light' : 'text-paper/75 hover:bg-paper/10 hover:text-paper'}`
               }
             >
-              <Icon className="w-[18px] h-[18px]" />
-              {label}
+              <Icon className="w-[18px] h-[18px] shrink-0" />
+              {!collapsed && label}
             </NavLink>
           ))}
         </nav>
 
-        <div className="px-6 py-5 border-t border-paper/10">
-          <p className="text-xs text-paper/50 truncate mb-2">{user?.email}</p>
+        <div className={`py-5 border-t border-paper/10 ${collapsed ? 'flex flex-col items-center gap-3 px-2' : 'px-6'}`}>
+          {!collapsed && <p className="text-xs text-paper/50 truncate mb-2">{user?.email}</p>}
           <NavLink
             to="/settings"
-            className="block text-sm text-paper/70 hover:text-gold-light transition-colors mb-3"
+            title="Settings"
+            className={`flex items-center gap-2 text-sm text-paper/70 hover:text-gold-light transition-colors ${
+              collapsed ? 'justify-center' : 'mb-3'
+            }`}
           >
-            ⚙ Settings
+            <SettingsIcon className="w-[18px] h-[18px] shrink-0" />
+            {!collapsed && 'Settings'}
           </NavLink>
           <button
             onClick={handleSignOut}
-            className="text-sm text-paper/70 hover:text-gold-light transition-colors"
+            title="Sign out"
+            className={`flex items-center gap-2 text-sm text-paper/70 hover:text-gold-light transition-colors ${
+              collapsed ? 'justify-center' : ''
+            }`}
           >
-            Sign out
+            <SignOutIcon className="w-[18px] h-[18px] shrink-0" />
+            {!collapsed && 'Sign out'}
           </button>
         </div>
       </aside>
@@ -95,6 +130,40 @@ export default function AppShell({ children }) {
         ))}
       </nav>
     </div>
+  )
+}
+
+function CollapseToggleIcon({ collapsed, ...props }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" {...props}>
+      {collapsed ? (
+        <path d="M9 6l6 6-6 6" strokeLinecap="round" strokeLinejoin="round" />
+      ) : (
+        <path d="M15 6l-6 6 6 6" strokeLinecap="round" strokeLinejoin="round" />
+      )}
+    </svg>
+  )
+}
+
+function SettingsIcon(props) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" {...props}>
+      <circle cx="12" cy="12" r="3" />
+      <path
+        d="M19.4 13a7.97 7.97 0 000-2l2-1.5-2-3.5-2.4 1a8 8 0 00-1.7-1L15 3h-4l-.3 2.5a8 8 0 00-1.7 1l-2.4-1-2 3.5L6.6 11a7.97 7.97 0 000 2l-2 1.5 2 3.5 2.4-1a8 8 0 001.7 1L11 21h4l.3-2.5a8 8 0 001.7-1l2.4 1 2-3.5-2-1.5Z"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  )
+}
+
+function SignOutIcon(props) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" {...props}>
+      <path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M10 8l-4 4 4 4M6 12h11" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
   )
 }
 
