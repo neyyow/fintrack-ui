@@ -8,6 +8,7 @@ const NAV_ITEMS = [
   { to: '/income', label: 'Income', icon: IncomeIcon },
   { to: '/budget', label: 'Budget', icon: BudgetIcon },
   { to: '/reports', label: 'Reports', icon: ReportsIcon },
+  { to: '/logs', label: 'Logs', icon: LogsIcon },
 ]
 
 export default function AppShell({ children }) {
@@ -139,6 +140,15 @@ function ReportsIcon(props) {
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" {...props}>
       <path d="M5 4h11l3 3v13a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1Z" strokeLinejoin="round" />
       <path d="M8 12v5M12 9v8M16 14v3" strokeLinecap="round" />
+    </svg>
+  )
+}
+
+function LogsIcon(props) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" {...props}>
+      <path d="M5 5.5A1.5 1.5 0 0 1 6.5 4h11A1.5 1.5 0 0 1 19 5.5v13a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 5 18.5v-13Z" />
+      <path d="M8.5 9h7M8.5 12.5h7M8.5 16h4" strokeLinecap="round" />
     </svg>
   )
 }

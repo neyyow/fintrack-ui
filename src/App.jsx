@@ -7,6 +7,7 @@ import Expenses from './pages/Expenses'
 import Income from './pages/Income'
 import Budget from './pages/Budget'
 import Reports from './pages/Reports'
+import Logs from './pages/Logs'
 import Settings from './pages/Settings'
 import ProtectedRoute from './components/ProtectedRoute'
 import AppShell from './components/AppShell'
@@ -64,6 +65,16 @@ export default function App() {
           <ProtectedRoute>
             <AppShell>
               <Reports />
+            </AppShell>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/logs"
+        element={
+          <ProtectedRoute>
+            <AppShell>
+              <Logs />
             </AppShell>
           </ProtectedRoute>
         }
