@@ -19,11 +19,13 @@ export const getProfile = () =>
   client.get('/profile').then((res) => res.data)
 
 // PUT /profile
-export const updateProfile = (username, email) =>
+// Email is intentionally not sent - it can't be changed after signup (see
+// ProfileEndpoints.cs) because it's also the identity key Google Sign-In
+// uses to match accounts.
+export const updateProfile = (username) =>
   client
     .put('/profile', {
-      Username: username,
-      Email: email
+      Username: username
     })
     .then((res) => res.data)
 // PUT /change-password

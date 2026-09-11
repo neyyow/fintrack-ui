@@ -8,7 +8,6 @@ import {
 
 export default function Settings() {
   const [originalUsername, setOriginalUsername] = useState('')
-  const [originalEmail, setOriginalEmail] = useState('')
   const [username, setUsername] = useState('')
   const [email, setEmail] = useState('')
   const [loading, setLoading] = useState(true)
@@ -38,7 +37,6 @@ export default function Settings() {
       setUsername(data.username)
       setEmail(data.email)
       setOriginalUsername(data.username)
-      setOriginalEmail(data.email)
     } catch {
       setErrorMessage('Failed to load profile.')
     } finally {
@@ -54,10 +52,9 @@ export default function Settings() {
     setErrorMessage('')
 
     try {
-      await updateProfile(username, email)
+      await updateProfile(username)
       setSuccessMessage('✔ Profile updated successfully!')
       setOriginalUsername(username)
-      setOriginalEmail(email)
     } catch (err) {
       setErrorMessage(err.response?.data || 'Failed to update profile.')
     } finally {
@@ -97,9 +94,7 @@ export default function Settings() {
     return <p>Loading profile...</p>
   }
   
-  const hasChanges =
-  username !== originalUsername ||
-  email !== originalEmail
+  const hasChanges = username !== originalUsername
   return (
     <div>
       <h1 className="text-3xl font-semibold mb-2">
@@ -161,10 +156,15 @@ export default function Settings() {
 
           <input
             type="email"
-            className="input-field"
+            className="input-field opacity-60 cursor-not-allowed"
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            disabled
+            readOnly
           />
+
+          <p className="text-xs text-ink/50 mt-1">
+            Email can't be changed - it's also how sign-in matches you to your account.
+          </p>
         </div>
 
         <button
