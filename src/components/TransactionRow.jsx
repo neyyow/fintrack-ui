@@ -33,7 +33,7 @@ export default function TransactionRow({ transaction, onEdit, onDelete }) {
       </p>
 
       <div className="hidden group-hover:flex items-center gap-1.5 shrink-0">
-        {isExpense && onEdit && (
+        {onEdit && (
           <button
             onClick={() => onEdit(transaction)}
             className="text-xs text-pine-dark/70 hover:text-pine-dark px-2 py-1 rounded"

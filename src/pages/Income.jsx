@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react'
 import {
   getIncomes,
   createIncome,
+  updateIncome,
   deleteIncome,
   getRecurringIncomes,
   createRecurringIncome,
@@ -42,6 +43,7 @@ export default function Income() {
   const [loading, setLoading] = useState(true)
   const [errorMsg, setErrorMsg] = useState('')
   const [modalOpen, setModalOpen] = useState(false)
+  const [editing, setEditing] = useState(null)
   const [form, setForm] = useState(emptyForm)
   const [saving, setSaving] = useState(false)
   const [hiddenVersion, setHiddenVersion] = useState(0)
@@ -99,7 +101,18 @@ export default function Income() {
   }
 
   function openAdd() {
+    setEditing(null)
     setForm(emptyForm)
+    setModalOpen(true)
+  }
+
+  function openEdit(transaction) {
+    setEditing(transaction)
+    setForm({
+      ...emptyForm,
+      amount: String(transaction.amount),
+      source: transaction.source,
+    })
     setModalOpen(true)
   }
 
@@ -107,7 +120,9 @@ export default function Income() {
     e.preventDefault()
     setSaving(true)
     try {
-      if (form.isRecurring) {
+      if (editing) {
+        await updateIncome(editing.id, { amount: Number(form.amount), source: form.source })
+      } else if (form.isRecurring) {
         await createRecurringIncome({
           amount: Number(form.amount),
           source: form.source,
@@ -219,12 +234,12 @@ export default function Income() {
             </p>
           )}
           {incomes.map((i) => (
-            <TransactionRow key={i.id} transaction={i} onDelete={handleDelete} />
+            <TransactionRow key={i.id} transaction={i} onEdit={openEdit} onDelete={handleDelete} />
           ))}
         </div>
       </div>
 
-      <Modal open={modalOpen} onClose={() => setModalOpen(false)} title="Add income">
+      <Modal open={modalOpen} onClose={() => setModalOpen(false)} title={editing ? 'Edit income' : 'Add income'}>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="label-field" htmlFor="amount">Amount</label>
@@ -250,17 +265,19 @@ export default function Income() {
             onDeleteCustom={handleDeleteSource}
           />
 
-          <label className="flex items-center gap-2 text-sm text-ink/80 pt-1">
-            <input
-              type="checkbox"
-              checked={form.isRecurring}
-              onChange={(e) => setForm({ ...form, isRecurring: e.target.checked })}
-              className="w-4 h-4 accent-pine"
-            />
-            Make this repeat automatically
-          </label>
+          {!editing && (
+            <label className="flex items-center gap-2 text-sm text-ink/80 pt-1">
+              <input
+                type="checkbox"
+                checked={form.isRecurring}
+                onChange={(e) => setForm({ ...form, isRecurring: e.target.checked })}
+                className="w-4 h-4 accent-pine"
+              />
+              Make this repeat automatically
+            </label>
+          )}
 
-          {form.isRecurring && (
+          {!editing && form.isRecurring && (
             <div className="bg-pine/5 border border-pine/15 rounded-md p-4 space-y-4">
               <div>
                 <label className="label-field" htmlFor="frequency">Repeat</label>
@@ -314,7 +331,13 @@ export default function Income() {
 
           <div className="flex gap-3 pt-2">
             <button type="submit" disabled={saving} className="btn-primary flex-1 disabled:opacity-60">
-              {saving ? 'Saving…' : form.isRecurring ? 'Save recurring income' : 'Add income'}
+              {saving
+                ? 'Saving…'
+                : editing
+                ? 'Save changes'
+                : form.isRecurring
+                ? 'Save recurring income'
+                : 'Add income'}
             </button>
             <button type="button" onClick={() => setModalOpen(false)} className="btn-secondary">
               Cancel

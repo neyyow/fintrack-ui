@@ -7,6 +7,9 @@ export const getIncome = (id) => client.get(`/income/${id}`).then((res) => res.d
 export const createIncome = ({ amount, source }) =>
   client.post('/income', { Amount: amount, Source: source }).then((res) => res.data)
 
+export const updateIncome = (id, { amount, source }) =>
+  client.put(`/income/${id}`, { Amount: amount, Source: source }).then((res) => res.data)
+
 export const deleteIncome = (id) => client.delete(`/income/${id}`).then((res) => res.data)
 
 // --- Recurring income ---
