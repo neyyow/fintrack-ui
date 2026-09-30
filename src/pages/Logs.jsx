@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { getLogs } from '../api/logs'
 import { formatCurrency } from '../utils/format'
 
-const PAGE_SIZE = 25
+const PAGE_SIZE = 15
 
 function normalize(data) {
   return data.map((l) => ({

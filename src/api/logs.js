@@ -1,7 +1,6 @@
 import client from './client'
 
-// page is 1-indexed. action/entityType are optional - pass 'all' or omit to skip filtering.
-export const getLogs = ({ page = 1, pageSize = 25, action, entityType } = {}) =>
+export const getLogs = ({ page = 1, pageSize = 15, action, entityType } = {}) =>
   client
     .get('/logs', {
       params: {
