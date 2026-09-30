@@ -12,7 +12,8 @@ import { formatCurrency, formatDate } from '../utils/format'
 function firstDayOfThisMonth() {
   const d = new Date()
   const local = new Date(d.getFullYear(), d.getMonth(), 1)
-  return local.toISOString().slice(0, 10)
+  const adjusted = new Date(local.getTime() - local.getTimezoneOffset() * 60000)
+  return adjusted.toISOString().slice(0, 10)
 }
 
 function todayDateInputValue() {
@@ -85,8 +86,6 @@ export default function Reports() {
     }))
   }
 
-  // All transactions in the selected date range, before type/category filters -
-  // used for the summary cards and charts, which should reflect the whole range.
   const inRange = useMemo(() => {
     const fromDate = new Date(from)
     const toDate = new Date(to)
@@ -155,8 +154,6 @@ export default function Reports() {
 
   function escapeCsvField(value) {
     const str = String(value ?? '')
-    // Wrap in quotes (and escape any inner quotes) if the value itself
-    // contains a comma, quote, or newline - otherwise it'd break the columns.
     if (/[",\n]/.test(str)) return `"${str.replace(/"/g, '""')}"`
     return str
   }
@@ -175,9 +172,7 @@ export default function Reports() {
       .map((row) => row.map(escapeCsvField).join(','))
       .join('\r\n')
 
-    // The leading \uFEFF (byte order mark) tells Excel this file is UTF-8,
-    // so peso signs and other special characters don't show up garbled.
-    const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' })
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
     const url = URL.createObjectURL(blob)
     const link = document.createElement('a')
     link.href = url
