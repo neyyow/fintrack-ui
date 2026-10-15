@@ -75,6 +75,11 @@
     @apply block text-sm font-medium text-pine-dark/80 mb-1.5;
   }
 
+  /* Placeholder block shown while data is loading (keeps the layout from jumping) */
+  .skeleton {
+    @apply rounded-md bg-pine/10 animate-pulse motion-reduce:animate-none;
+  }
+
   /* Wax-seal style category stamp */
   .stamp {
     @apply flex items-center justify-center rounded-full shrink-0;

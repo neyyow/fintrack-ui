@@ -262,22 +262,24 @@ export default function Reports() {
         </div>
       </div>
 
-      {loading ? (
-        <p className="text-ink/50 text-sm py-6 text-center">Loading…</p>
-      ) : (
-        <>
+      {/* The page structure always renders; only the contents show a skeleton while loading */}
+      <div aria-busy={loading}>
+        {loading && <span className="sr-only" role="status">Loading report…</span>}
+
           {/* Summary */}
           <div className="flex flex-wrap gap-4 mb-8">
-            <StatCard label="Income in range" amount={totalIncome} tone="pine" eyebrow="In" />
-            <StatCard label="Expenses in range" amount={totalExpense} tone="rust" eyebrow="Out" />
-            <StatCard label="Net" amount={totalIncome - totalExpense} tone="gold" eyebrow="Net" />
+            <StatCard label="Income in range" amount={totalIncome} tone="pine" eyebrow="In" loading={loading} />
+            <StatCard label="Expenses in range" amount={totalExpense} tone="rust" eyebrow="Out" loading={loading} />
+            <StatCard label="Net" amount={totalIncome - totalExpense} tone="gold" eyebrow="Net" loading={loading} />
           </div>
 
           {/* Charts */}
           <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 mb-8">
             <div className="lg:col-span-3 ledger-card p-5">
               <h2 className="text-lg font-semibold mb-4">Income vs. expenses by month</h2>
-              {monthlyTrend.length === 0 ? (
+              {loading ? (
+                <div className="skeleton h-64" aria-hidden="true" />
+              ) : monthlyTrend.length === 0 ? (
                 <p className="text-ink/50 text-sm py-10 text-center">No transactions in this range.</p>
               ) : (
                 <div className="h-64">
@@ -298,7 +300,18 @@ export default function Reports() {
 
             <div className="lg:col-span-2 ledger-card p-5">
               <h2 className="text-lg font-semibold mb-4">Spending by category</h2>
-              {categoryBreakdown.length === 0 ? (
+              {loading ? (
+                <>
+                  <div className="h-48 flex items-center justify-center" aria-hidden="true">
+                    <div className="skeleton w-36 h-36 rounded-full" />
+                  </div>
+                  <div className="space-y-1.5 mt-3" aria-hidden="true">
+                    {[0, 1, 2].map((i) => (
+                      <div key={i} className="skeleton h-5" />
+                    ))}
+                  </div>
+                </>
+              ) : categoryBreakdown.length === 0 ? (
                 <p className="text-ink/50 text-sm py-10 text-center">No expenses in this range.</p>
               ) : (
                 <>
@@ -343,7 +356,13 @@ export default function Reports() {
               </button>
             </div>
 
-            {filtered.length === 0 ? (
+            {loading ? (
+              <div className="space-y-2 px-3 md:px-0 py-2" aria-hidden="true">
+                {[0, 1, 2, 3, 4].map((i) => (
+                  <div key={i} className="skeleton h-8" />
+                ))}
+              </div>
+            ) : filtered.length === 0 ? (
               <p className="text-ink/50 text-sm py-8 text-center">No transactions match these filters.</p>
             ) : (
               <table className="w-full text-sm">
@@ -372,8 +391,7 @@ export default function Reports() {
               </table>
             )}
           </div>
-        </>
-      )}
+      </div>
     </div>
   )
 }
