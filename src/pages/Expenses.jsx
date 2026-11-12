@@ -1,14 +1,17 @@
 import React, { useEffect, useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { getExpenses, createExpense, updateExpense, deleteExpense } from '../api/expense'
+import { getWallets } from '../api/wallet'
 import Modal from '../components/Modal'
 import TransactionRow from '../components/TransactionRow'
 import CategoryPicker from '../components/CategoryPicker'
 import { EXPENSE_CATEGORIES, mergeCategories, hideCustomCategory } from '../utils/categories'
 
-const emptyForm = { amount: '', category: EXPENSE_CATEGORIES[0].name, description: '' }
+const emptyForm = { amount: '', category: EXPENSE_CATEGORIES[0].name, description: '', walletId: '' }
 
 export default function Expenses() {
   const [expenses, setExpenses] = useState([])
+  const [wallets, setWallets] = useState([])
   const [loading, setLoading] = useState(true)
   const [errorMsg, setErrorMsg] = useState('')
   const [modalOpen, setModalOpen] = useState(false)
@@ -16,6 +19,12 @@ export default function Expenses() {
   const [form, setForm] = useState(emptyForm)
   const [saving, setSaving] = useState(false)
   const [hiddenVersion, setHiddenVersion] = useState(0)
+
+  // Attach each expense's wallet name for display (no wallet -> undefined)
+  const expensesWithWallet = useMemo(() => {
+    const nameById = Object.fromEntries(wallets.map((w) => [w.id, w.name]))
+    return expenses.map((e) => ({ ...e, walletName: nameById[e.walletId] }))
+  }, [expenses, wallets])
 
   const categoryOptions = useMemo(
     () => mergeCategories(EXPENSE_CATEGORIES, expenses, 'category', 'expense'),
@@ -31,8 +40,10 @@ export default function Expenses() {
     setLoading(true)
     setErrorMsg('')
     try {
-      const data = await getExpenses()
+      // If wallets can't load, expenses should still show, just without wallet labels
+      const [data, walletData] = await Promise.all([getExpenses(), getWallets().catch(() => [])])
       setExpenses(normalize(data))
+      setWallets(walletData.map((w) => ({ id: w.id ?? w.Id, name: w.name ?? w.Name })))
     } catch {
       setErrorMsg('Could not reach FinTrack API. Check your API base URL in .env.')
     } finally {
@@ -52,6 +63,7 @@ export default function Expenses() {
         category: e.category ?? e.Category,
         description: e.description ?? e.Description,
         dateCreated: e.dateCreated ?? e.DateCreated,
+        walletId: e.walletId ?? e.WalletId ?? null,
         type: 'expense',
       }))
       .sort((a, b) => new Date(b.dateCreated) - new Date(a.dateCreated))
@@ -69,6 +81,7 @@ export default function Expenses() {
       amount: String(transaction.amount),
       category: transaction.category,
       description: transaction.description ?? '',
+      walletId: transaction.walletId ?? '',
     })
     setModalOpen(true)
   }
@@ -77,7 +90,12 @@ export default function Expenses() {
     e.preventDefault()
     setSaving(true)
     try {
-      const payload = { amount: Number(form.amount), category: form.category, description: form.description }
+      const payload = {
+        amount: Number(form.amount),
+        category: form.category,
+        description: form.description,
+        walletId: form.walletId === '' ? null : Number(form.walletId),
+      }
       if (editing) {
         await updateExpense(editing.id, payload)
       } else {
@@ -109,9 +127,14 @@ export default function Expenses() {
           <h1 className="text-3xl font-semibold">Expenses</h1>
           <p className="text-ink/55 mt-1">Every peso out, stamped and dated.</p>
         </div>
-        <button onClick={openAdd} className="btn-primary">
-          + Add expense
-        </button>
+        <div className="flex items-center gap-2">
+          <Link to="/wallets" className="btn-secondary">
+            Manage wallets
+          </Link>
+          <button onClick={openAdd} className="btn-primary">
+            + Add expense
+          </button>
+        </div>
       </div>
 
       {errorMsg && (
@@ -128,7 +151,7 @@ export default function Expenses() {
               No expenses yet. Add your first one above.
             </p>
           )}
-          {expenses.map((e) => (
+          {expensesWithWallet.map((e) => (
             <TransactionRow key={e.id} transaction={e} onEdit={openEdit} onDelete={handleDelete} />
           ))}
         </div>
@@ -159,6 +182,26 @@ export default function Expenses() {
             onChange={(val) => setForm({ ...form, category: val })}
             onDeleteCustom={handleDeleteCategory}
           />
+
+          <div>
+            <label className="label-field" htmlFor="wallet">Wallet</label>
+            <select
+              id="wallet"
+              value={form.walletId}
+              onChange={(e) => setForm({ ...form, walletId: e.target.value })}
+              className="input-field"
+            >
+              <option value="">No wallet</option>
+              {wallets.map((w) => (
+                <option key={w.id} value={w.id}>{w.name}</option>
+              ))}
+            </select>
+            {wallets.length === 0 && (
+              <p className="text-xs text-ink/50 mt-1.5">
+                No wallets yet. <Link to="/wallets" className="underline">Add one</Link> to track where this money came from.
+              </p>
+            )}
+          </div>
 
           <div>
             <label className="label-field" htmlFor="description">Description</label>

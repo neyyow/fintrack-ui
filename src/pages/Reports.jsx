@@ -5,6 +5,7 @@ import {
 } from 'recharts'
 import { getExpenses } from '../api/expense'
 import { getIncomes } from '../api/income'
+import { getWallets } from '../api/wallet'
 import StatCard from '../components/StatCard'
 import { categoryMeta } from '../utils/categories'
 import { formatCurrency, formatDate } from '../utils/format'
@@ -38,6 +39,7 @@ function monthLabel(key) {
 export default function Reports() {
   const [expenses, setExpenses] = useState([])
   const [incomes, setIncomes] = useState([])
+  const [wallets, setWallets] = useState([])
   const [loading, setLoading] = useState(true)
   const [errorMsg, setErrorMsg] = useState('')
 
@@ -52,9 +54,15 @@ export default function Reports() {
       setLoading(true)
       setErrorMsg('')
       try {
-        const [expenseData, incomeData] = await Promise.all([getExpenses(), getIncomes()])
+        // If wallets can't load, the rest of the report should still work
+        const [expenseData, incomeData, walletData] = await Promise.all([
+          getExpenses(),
+          getIncomes(),
+          getWallets().catch(() => []),
+        ])
         setExpenses(normalizeExpenses(expenseData))
         setIncomes(normalizeIncomes(incomeData))
+        setWallets(walletData.map((w) => ({ id: w.id ?? w.Id, name: w.name ?? w.Name })))
       } catch {
         setErrorMsg('Could not reach FinTrack API. Check your API base URL in .env.')
       } finally {
@@ -71,6 +79,7 @@ export default function Reports() {
       label: e.category ?? e.Category,
       description: e.description ?? e.Description,
       dateCreated: e.dateCreated ?? e.DateCreated,
+      walletId: e.walletId ?? e.WalletId ?? null,
       type: 'expense',
     }))
   }
@@ -133,6 +142,25 @@ export default function Reports() {
       .sort((a, b) => b.value - a.value)
   }, [inRange])
 
+  const walletNameById = useMemo(
+    () => Object.fromEntries(wallets.map((w) => [w.id, w.name])),
+    [wallets]
+  )
+
+  // Expenses in range grouped by wallet. Expenses with no (or a deleted) wallet go in "No wallet".
+  const walletBreakdown = useMemo(() => {
+    const groups = {}
+    inRange.filter((t) => t.type === 'expense').forEach((t) => {
+      const known = walletNameById[t.walletId] !== undefined
+      const key = known ? String(t.walletId) : 'none'
+      if (!groups[key]) groups[key] = { key, name: known ? walletNameById[t.walletId] : 'No wallet', value: 0 }
+      groups[key].value += t.amount
+    })
+    return Object.values(groups)
+      .map((g) => ({ ...g, share: totalExpense > 0 ? (g.value / totalExpense) * 100 : 0 }))
+      .sort((a, b) => b.value - a.value)
+  }, [inRange, walletNameById, totalExpense])
+
   const monthlyTrend = useMemo(() => {
     const byMonth = {}
     inRange.forEach((t) => {
@@ -159,13 +187,14 @@ export default function Reports() {
   }
 
   function handleExportCsv() {
-    const headers = ['Date', 'Type', 'Category/Source', 'Description', 'Amount']
+    const headers = ['Date', 'Type', 'Category/Source', 'Description', 'Amount', 'Wallet']
     const rows = filtered.map((t) => [
       new Date(t.dateCreated).toISOString().slice(0, 10), // ISO date so spreadsheets recognize it as a real date
       t.type,
       t.label,
       t.description || '',
       t.amount.toFixed(2), // plain number, no currency symbol, so it's usable in spreadsheet formulas
+      walletNameById[t.walletId] ?? '', // last column, so existing spreadsheets keep their column order
     ])
 
     const csvContent = [headers, ...rows]
@@ -343,6 +372,39 @@ export default function Reports() {
             </div>
           </div>
 
+          {/* Spending by wallet */}
+          <div className="ledger-card p-5 mb-8">
+            <h2 className="text-lg font-semibold mb-4">Spending by wallet</h2>
+            {loading ? (
+              <div className="space-y-3" aria-hidden="true">
+                {[0, 1, 2].map((i) => (
+                  <div key={i} className="skeleton h-8" />
+                ))}
+              </div>
+            ) : walletBreakdown.length === 0 ? (
+              <p className="text-ink/50 text-sm py-6 text-center">No expenses in this range.</p>
+            ) : (
+              <div className="space-y-3">
+                {walletBreakdown.map((w) => (
+                  <div key={w.key}>
+                    <div className="flex items-center justify-between text-sm mb-1">
+                      <span className={w.key === 'none' ? 'text-ink/55' : 'font-medium'}>{w.name}</span>
+                      <span className="amount font-medium">
+                        {formatCurrency(w.value)}{' '}
+                        <span className="text-ink/45 font-normal">
+                          · {w.share < 1 ? '<1' : Math.round(w.share)}%
+                        </span>
+                      </span>
+                    </div>
+                    <div className="h-2 rounded-full bg-pine/10 overflow-hidden">
+                      <div className="h-full rounded-full bg-pine" style={{ width: `${w.share}%` }} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
           {/* Detailed list */}
           <div className="ledger-card p-2 md:p-5">
             <div className="flex items-center justify-between px-3 md:px-0 mb-2">
@@ -371,6 +433,7 @@ export default function Reports() {
                     <th className="py-2 px-3 md:px-0 font-medium">Date</th>
                     <th className="py-2 px-3 font-medium">Type</th>
                     <th className="py-2 px-3 font-medium">Category / Source</th>
+                    <th className="py-2 px-3 font-medium">Wallet</th>
                     <th className="py-2 px-3 font-medium">Description</th>
                     <th className="py-2 px-3 font-medium text-right">Amount</th>
                   </tr>
@@ -381,6 +444,7 @@ export default function Reports() {
                       <td className="py-2 px-3 md:px-0 whitespace-nowrap">{formatDate(t.dateCreated)}</td>
                       <td className="py-2 px-3 capitalize">{t.type}</td>
                       <td className="py-2 px-3">{t.label}</td>
+                      <td className="py-2 px-3 text-ink/60">{walletNameById[t.walletId] ?? '—'}</td>
                       <td className="py-2 px-3 text-ink/60">{t.description || '—'}</td>
                       <td className={`py-2 px-3 text-right amount font-medium ${t.type === 'expense' ? 'amount-expense' : 'amount-income'}`}>
                         {t.type === 'expense' ? '−' : '+'}{formatCurrency(t.amount)}

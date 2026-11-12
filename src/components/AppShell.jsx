@@ -6,6 +6,9 @@ const NAV_ITEMS = [
   { to: '/', label: 'Dashboard', icon: HomeIcon },
   { to: '/expenses', label: 'Expenses', icon: ExpenseIcon },
   { to: '/income', label: 'Income', icon: IncomeIcon },
+  // desktopOnly: the phone's bottom bar is already full; on mobile, Wallets is reached
+  // from the "Manage wallets" button on the Expenses page.
+  { to: '/wallets', label: 'Wallets', icon: WalletIcon, desktopOnly: true },
   { to: '/budget', label: 'Budget', icon: BudgetIcon },
   { to: '/reports', label: 'Reports', icon: ReportsIcon },
   { to: '/logs', label: 'Logs', icon: LogsIcon },
@@ -113,7 +116,7 @@ export default function AppShell({ children }) {
 
       {/* Mobile bottom tab bar */}
       <nav className="md:hidden fixed bottom-0 inset-x-0 bg-pine-dark border-t border-paper/10 flex justify-around py-2 z-40 print:hidden">
-        {NAV_ITEMS.map(({ to, label, icon: Icon }) => (
+        {NAV_ITEMS.filter((item) => !item.desktopOnly).map(({ to, label, icon: Icon }) => (
           <NavLink
             key={to}
             to={to}
@@ -172,6 +175,16 @@ function HomeIcon(props) {
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" {...props}>
       <path d="M3 11.5 12 4l9 7.5" strokeLinecap="round" strokeLinejoin="round" />
       <path d="M5.5 10v9a1 1 0 0 0 1 1H9a1 1 0 0 0 1-1v-4.5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1V19a1 1 0 0 0 1 1h2.5a1 1 0 0 0 1-1v-9" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
+function WalletIcon(props) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" {...props}>
+      <path d="M4 8V6.5A1.5 1.5 0 0 1 5.5 5H17a1 1 0 0 1 1 1v2" strokeLinecap="round" strokeLinejoin="round" />
+      <rect x="3.5" y="8" width="17" height="11" rx="2" />
+      <circle cx="16.5" cy="13.5" r="1" fill="currentColor" stroke="none" />
     </svg>
   )
 }

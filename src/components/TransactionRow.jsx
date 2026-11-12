@@ -22,8 +22,15 @@ export default function TransactionRow({ transaction, onEdit, onDelete }) {
 
       <div className="flex-1 min-w-0">
         <p className="font-medium text-ink truncate">{isExpense ? transaction.category : transaction.source}</p>
-        {isExpense && transaction.description && (
-          <p className="text-sm text-ink/50 truncate">{transaction.description}</p>
+        {isExpense && (transaction.walletName || transaction.description) && (
+          <p className="text-sm text-ink/50 truncate">
+            {transaction.walletName && (
+              <span className="inline-block text-[11px] leading-none px-1.5 py-1 mr-1.5 rounded bg-pine/10 text-pine-dark align-middle">
+                {transaction.walletName}
+              </span>
+            )}
+            {transaction.description}
+          </p>
         )}
       </div>
 
